@@ -1,0 +1,31 @@
+name: Deploy to AKS
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.DEPLOYER_MSI_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --name Cluster_Policies \
+            --resource-group policy-referential \
+            --overwrite-existing
+
+      - name: Deploy manifests
+        run: kubectl apply -f manifests/ -n team-alpha
