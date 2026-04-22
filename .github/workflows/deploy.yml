@@ -29,4 +29,4 @@ jobs:
             --overwrite-existing
 
       - name: Deploy manifests
-        run: kubectl apply -f manifests/ -n team-alpha
+        run: kubectl apply -f manifests/ -n team-beta

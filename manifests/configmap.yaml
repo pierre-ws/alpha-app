@@ -2,14 +2,14 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: hello-world
-  namespace: team-alpha
+  namespace: team-beta
 data:
   index.html: |
     <!DOCTYPE html>
     <html lang="en">
     <head>
       <meta charset="UTF-8" />
-      <title>Hello from team-alpha</title>
+      <title>Hello from team-beta</title>
       <style>
         body { font-family: system-ui; background: #0d1117; color: #e6edf3; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
         .card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 48px; text-align: center; }
@@ -20,7 +20,7 @@ data:
     <body>
       <div class="card">
         <h1>Hello World 👋</h1>
-        <p>Deployed by team-alpha via GitHub Actions + NaaS operator</p>
+        <p>Deployed by team-beta via GitHub Actions + NaaS operator</p>
       </div>
     </body>
     </html>
