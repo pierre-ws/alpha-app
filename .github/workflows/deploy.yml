@@ -21,12 +21,17 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Get AKS credentials
-        run: |
-          az aks get-credentials \
-            --name Cluster_Policies \
-            --resource-group policy-referential \
-            --overwrite-existing
+      - name: Install kubelogin
+        uses: azure/use-kubelogin@v1
+        with:
+          kubelogin-version: 'v0.0.24'
+
+      - name: Set AKS context
+        uses: azure/aks-set-context@v4
+        with:
+          resource-group: policy-referential
+          cluster-name: Cluster_Policies
+          use-kubelogin: 'true'
 
       - name: Deploy manifests
         run: kubectl apply -f manifests/ -n team-beta
