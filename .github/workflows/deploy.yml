@@ -27,6 +27,14 @@ jobs:
         id: meta
         run: echo "tag=${{ github.sha }}" >> "$GITHUB_OUTPUT"
 
+      - name: Build and push frontend image
+        run: |
+          az acr build \
+            --registry "${{ vars.ACR_NAME }}" \
+            --image "alpha-app/frontend:${{ steps.meta.outputs.tag }}" \
+            --file src/frontend/Dockerfile \
+            src/frontend/
+
       - name: Build and push backend image
         run: |
           az acr build \
@@ -64,11 +72,12 @@ jobs:
           ACR_NAME: ${{ vars.ACR_NAME }}
           IMAGE_TAG: ${{ needs.build.outputs.image_tag }}
         run: |
-          envsubst '${ACR_NAME}${IMAGE_TAG}' < manifests/backend-deployment.yaml \
-            > manifests/backend-deployment.yaml.rendered
-          mv manifests/backend-deployment.yaml.rendered manifests/backend-deployment.yaml
-          if grep -E '\$\{[A-Z_]+\}' manifests/backend-deployment.yaml; then
-            echo "ERROR: unresolved placeholders in backend-deployment.yaml"
+          for f in manifests/deployment.yaml manifests/backend-deployment.yaml; do
+            envsubst '${ACR_NAME}${IMAGE_TAG}' < "$f" > "$f.rendered"
+            mv "$f.rendered" "$f"
+          done
+          if grep -rlE '\$\{[A-Z_]+\}' manifests/deployment.yaml manifests/backend-deployment.yaml; then
+            echo "ERROR: unresolved placeholders found"
             exit 1
           fi
 
