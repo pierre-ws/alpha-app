@@ -73,7 +73,6 @@ jobs:
 
       - name: Inject image references
         env:
-          ACR_NAME: ${ACR_NAME}
           IMAGE_TAG: ${{ needs.build.outputs.image_tag }}
         run: |
           for f in manifests/deployment.yaml manifests/backend-deployment.yaml; do
