@@ -4,7 +4,7 @@ metadata:
   name: db-config
   namespace: team-alpha
 data:
-  PGHOST: "REPLACE_WITH_POSTGRES_FQDN"
+  PGHOST: "teamalphapgsql.postgres.database.azure.com"
   PGDATABASE: "alpha"
   PGUSER: "mi-app-team-alpha"
 
