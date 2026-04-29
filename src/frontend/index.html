@@ -14,12 +14,22 @@
     th { color: #8b949e; font-weight: 500; }
     .badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; background: #238636; color: #fff; }
     .error { color: #f85149; font-size: 0.85rem; margin-top: 12px; }
+    form { display: flex; gap: 8px; margin-top: 20px; }
+    input[type="text"] { flex: 1; padding: 8px 12px; border-radius: 6px; border: 1px solid #30363d; background: #0d1117; color: #e6edf3; font-size: 0.9rem; outline: none; }
+    input[type="text"]:focus { border-color: #58a6ff; }
+    button { padding: 8px 16px; border-radius: 6px; border: none; background: #238636; color: #fff; font-size: 0.9rem; cursor: pointer; }
+    button:hover { background: #2ea043; }
+    button:disabled { background: #21262d; color: #8b949e; cursor: not-allowed; }
   </style>
 </head>
 <body>
   <div class="card">
     <h1>Alpha App 🚀</h1>
     <p>Frontend → Backend → Azure PostgreSQL (passwordless via Workload Identity)</p>
+    <form id="add-form">
+      <input type="text" id="new-name" placeholder="New item name…" required />
+      <button type="submit" id="add-btn">Add</button>
+    </form>
     <table id="items">
       <thead><tr><th>ID</th><th>Name</th><th>Created</th></tr></thead>
       <tbody><tr><td colspan="3" style="color:#8b949e">Loading…</td></tr></tbody>
@@ -27,20 +37,51 @@
     <div class="error" id="error" style="display:none"></div>
   </div>
   <script>
-    fetch('/api/items')
-      .then(r => r.ok ? r.json() : Promise.reject(r.statusText))
-      .then(items => {
-        const tbody = document.querySelector('#items tbody');
-        tbody.innerHTML = items.length
-          ? items.map(i => `<tr><td>${i.id}</td><td><span class="badge">${i.name}</span></td><td>${new Date(i.created_at).toLocaleString()}</td></tr>`).join('')
-          : '<tr><td colspan="3" style="color:#8b949e">No items found.</td></tr>';
+    function renderItems(items) {
+      const tbody = document.querySelector('#items tbody');
+      tbody.innerHTML = items.length
+        ? items.map(i => `<tr><td>${i.id}</td><td><span class="badge">${i.name}</span></td><td>${new Date(i.created_at).toLocaleString()}</td></tr>`).join('')
+        : '<tr><td colspan="3" style="color:#8b949e">No items found.</td></tr>';
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('error');
+      el.style.display = 'block';
+      el.textContent = msg;
+    }
+
+    function hideError() {
+      document.getElementById('error').style.display = 'none';
+    }
+
+    function loadItems() {
+      return fetch('/api/items')
+        .then(r => r.ok ? r.json() : Promise.reject(r.statusText))
+        .then(renderItems)
+        .catch(err => showError('Backend error: ' + err));
+    }
+
+    document.getElementById('add-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const input = document.getElementById('new-name');
+      const btn = document.getElementById('add-btn');
+      const name = input.value.trim();
+      if (!name) return;
+
+      btn.disabled = true;
+      hideError();
+      fetch('/api/items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
       })
-      .catch(err => {
-        document.querySelector('#items tbody').innerHTML = '';
-        const el = document.getElementById('error');
-        el.style.display = 'block';
-        el.textContent = 'Backend error: ' + err;
-      });
+        .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e.detail)))
+        .then(() => { input.value = ''; return loadItems(); })
+        .catch(err => showError('Error: ' + err))
+        .finally(() => { btn.disabled = false; });
+    });
+
+    loadItems();
   </script>
 </body>
 </html>

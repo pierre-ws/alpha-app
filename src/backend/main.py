@@ -6,6 +6,7 @@ import asyncpg
 from azure.identity.aio import ManagedIdentityCredential
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -61,7 +62,7 @@ app = FastAPI(title="alpha-app backend", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
@@ -78,6 +79,29 @@ async def list_items():
         try:
             rows = await conn.fetch("SELECT id, name, created_at FROM items ORDER BY created_at DESC LIMIT 20")
             return [dict(r) for r in rows]
+        finally:
+            await conn.close()
+    except Exception as exc:
+        log.exception("database error")
+        raise HTTPException(status_code=503, detail=str(exc))
+
+
+class ItemCreate(BaseModel):
+    name: str
+
+
+@app.post("/api/items", status_code=201)
+async def create_item(body: ItemCreate):
+    if not body.name.strip():
+        raise HTTPException(status_code=422, detail="name cannot be empty")
+    try:
+        conn = await get_connection()
+        try:
+            row = await conn.fetchrow(
+                "INSERT INTO items (name) VALUES ($1) RETURNING id, name, created_at",
+                body.name.strip(),
+            )
+            return dict(row)
         finally:
             await conn.close()
     except Exception as exc:
