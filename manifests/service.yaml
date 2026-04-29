@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: app
-  namespace: team-kappa
+  namespace: team-iota
 spec:
   selector:
     app: app
