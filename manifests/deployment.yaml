@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: app
-  namespace: team-iota
+  namespace: team-alpha
 spec:
   replicas: 1
   selector:
