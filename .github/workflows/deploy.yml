@@ -9,6 +9,10 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  IMAGE_NAME: acrpoliciesreferential.azurecr.io/alpha-app
+  ACR_NAME: ACRPoliciesReferential
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -29,18 +33,19 @@ jobs:
 
       - name: Build and push frontend image
         run: |
-          az acr login --name "${{ vars.ACR_NAME }}"
-          docker build -t "${{ vars.ACR_NAME }}.azurecr.io/alpha-app/frontend:${{ steps.meta.outputs.tag }}" \
+          IMG="${IMAGE_NAME}/frontend:${{ steps.meta.outputs.tag }}"
+          az acr login --name "${ACR_NAME}"
+          docker build -t "${IMG}" \
             -f src/frontend/Dockerfile src/frontend/
-          docker push "${{ vars.ACR_NAME }}.azurecr.io/alpha-app/frontend:${{ steps.meta.outputs.tag }}"
+          docker push "${IMG}"
 
       - name: Build and push backend image
         run: |
-          az acr build \
-            --registry "${{ vars.ACR_NAME }}" \
-            --image "alpha-app/backend:${{ steps.meta.outputs.tag }}" \
-            --file src/backend/Dockerfile \
-            src/backend/
+          IMG="${IMAGE_NAME}/backend:${{ steps.meta.outputs.tag }}"
+          az acr login --name "${ACR_NAME}"
+          docker build -t "${IMG}" \
+            -f src/backend/Dockerfile src/backend/
+          docker push "${IMG}"
 
   deploy:
     runs-on: ubuntu-latest
