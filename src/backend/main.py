@@ -1,5 +1,6 @@
 import os
 import logging
+from contextlib import asynccontextmanager
 
 import asyncpg
 from azure.identity.aio import ManagedIdentityCredential
@@ -9,22 +10,10 @@ from fastapi.middleware.cors import CORSMiddleware
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
-app = FastAPI(title="alpha-app backend")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["GET"],
-    allow_headers=["*"],
-)
-
 PGHOST = os.environ["PGHOST"]
 PGDATABASE = os.environ["PGDATABASE"]
 PGUSER = os.environ["PGUSER"]
 
-# Azure PostgreSQL Flexible Server requires an Entra ID token as the password.
-# The token is obtained automatically from the workload identity projected volume
-# injected by the AKS Workload Identity webhook (AZURE_FEDERATED_TOKEN_FILE).
 POSTGRES_AAD_SCOPE = "https://ossrdbms-aad.database.windows.net/.default"
 
 
@@ -43,6 +32,38 @@ async def get_connection() -> asyncpg.Connection:
         password=password,
         ssl="require",
     )
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    conn = await get_connection()
+    try:
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS items (
+                id SERIAL PRIMARY KEY,
+                name TEXT NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+            )
+        """)
+        await conn.execute("""
+            INSERT INTO items (name)
+            SELECT unnest(ARRAY['foo', 'bar', 'baz'])
+            WHERE NOT EXISTS (SELECT 1 FROM items)
+        """)
+        log.info("schema initialized")
+    finally:
+        await conn.close()
+    yield
+
+
+app = FastAPI(title="alpha-app backend", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/health")
