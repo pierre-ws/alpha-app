@@ -1,26 +1,10 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: hello-world
+  name: db-config
   namespace: team-alpha
 data:
-  index.html: |
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8" />
-      <title>Hello from team-alpha</title>
-      <style>
-        body { font-family: system-ui; background: #0d1117; color: #e6edf3; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-        .card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 48px; text-align: center; }
-        h1 { margin-bottom: 12px; }
-        p { color: #8b949e; }
-      </style>
-    </head>
-    <body>
-      <div class="card">
-        <h1>Hello World 👋</h1>
-        <p>Deployed by team-alpha via GitHub Actions + NaaS operator</p>
-      </div>
-    </body>
-    </html>
+  PGHOST: "REPLACE_WITH_POSTGRES_FQDN"
+  PGDATABASE: "alpha"
+  PGUSER: "mi-app-team-alpha"
+

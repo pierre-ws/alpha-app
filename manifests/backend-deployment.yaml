@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: team-alpha
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: workload
+      containers:
+        - name: backend
+          image: ${ACR_NAME}.azurecr.io/alpha-app/backend:${IMAGE_TAG}
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: db-config
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 30
