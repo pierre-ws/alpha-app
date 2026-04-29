@@ -34,4 +34,4 @@ jobs:
           use-kubelogin: 'true'
 
       - name: Deploy manifests
-        run: kubectl apply -f manifests/ -n team-beta
+        run: kubectl apply -f manifests/ -n team-kappa
