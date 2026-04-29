@@ -29,11 +29,10 @@ jobs:
 
       - name: Build and push frontend image
         run: |
-          az acr build \
-            --registry "${{ vars.ACR_NAME }}" \
-            --image "alpha-app/frontend:${{ steps.meta.outputs.tag }}" \
-            --file src/frontend/Dockerfile \
-            src/frontend/
+          az acr login --name "${{ vars.ACR_NAME }}"
+          docker build -t "${{ vars.ACR_NAME }}.azurecr.io/alpha-app/frontend:${{ steps.meta.outputs.tag }}" \
+            -f src/frontend/Dockerfile src/frontend/
+          docker push "${{ vars.ACR_NAME }}.azurecr.io/alpha-app/frontend:${{ steps.meta.outputs.tag }}"
 
       - name: Build and push backend image
         run: |
