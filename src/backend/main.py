@@ -62,7 +62,7 @@ app = FastAPI(title="alpha-app backend", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["*"],
 )
 
@@ -104,6 +104,23 @@ async def create_item(body: ItemCreate):
             return dict(row)
         finally:
             await conn.close()
+    except Exception as exc:
+        log.exception("database error")
+        raise HTTPException(status_code=503, detail=str(exc))
+
+
+@app.delete("/api/items/{item_id}", status_code=204)
+async def delete_item(item_id: int):
+    try:
+        conn = await get_connection()
+        try:
+            result = await conn.execute("DELETE FROM items WHERE id = $1", item_id)
+            if result == "DELETE 0":
+                raise HTTPException(status_code=404, detail="item not found")
+        finally:
+            await conn.close()
+    except HTTPException:
+        raise
     except Exception as exc:
         log.exception("database error")
         raise HTTPException(status_code=503, detail=str(exc))
